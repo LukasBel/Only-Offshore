@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/LukasBel/Only-Offshore.git/Handlers"
 	"github.com/LukasBel/Only-Offshore.git/Models"
 	"github.com/LukasBel/Only-Offshore.git/Storage"
 	"github.com/gofiber/fiber/v2"
@@ -9,6 +10,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 )
 
@@ -161,8 +163,12 @@ func main() {
 		DB: db,
 	}
 
+	emails := os.Getenv("TO")
+	emailAddresses := strings.Split(emails, ",")
+
+	Handlers.SendMail(emailAddresses)
+
 	app := fiber.New()
 	r.SetUpRoutes(app)
 	app.Listen(":8080")
-
 }
