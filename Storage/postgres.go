@@ -11,13 +11,13 @@ type Config struct {
 	Port    string
 	User    string
 	Pass    string
-	Name    string
+	DBName  string
 	SSLMode string
 }
 
 func NewConnection(c *Config) (*gorm.DB, error) {
-	dsn := fmt.Sprintf("host=%s port=%s user=%s password=%s name=%s sslmode=%s",
-		c.Host, c.Port, c.User, c.Pass, c.Name, c.SSLMode)
+	dsn := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=%s",
+		c.Host, c.Port, c.User, c.Pass, c.DBName, c.SSLMode)
 
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
 	if err != nil {
