@@ -36,7 +36,7 @@ func (r *Repository) GetStats(c *fiber.Ctx) error {
 		return err
 	}
 
-	c.Status(http.StatusOK).JSON(&fiber.Map{"message": "stats fetched succesfully"})
+	c.Status(http.StatusOK).JSON(&fiber.Map{"message": "stats fetched succesfully", "data": statsModel})
 	return nil
 }
 
@@ -55,7 +55,7 @@ func (r *Repository) GetStatsByID(c *fiber.Ctx) error {
 		return err
 	}
 
-	c.Status(http.StatusOK).JSON(&fiber.Map{"message": "stats fetched succesfully"})
+	c.Status(http.StatusOK).JSON(&fiber.Map{"message": "stats fetched succesfully", "data": statsModel})
 	return nil
 }
 
@@ -75,7 +75,7 @@ func (r *Repository) CreateUser(c *fiber.Ctx) error {
 		return err
 	}
 
-	c.Status(http.StatusOK).JSON(&fiber.Map{"message": "stats fetched succesfully"})
+	c.Status(http.StatusOK).JSON(&fiber.Map{"message": "user created succesfully"})
 	return nil
 }
 
@@ -100,7 +100,7 @@ func (r *Repository) UpdateStats(c *fiber.Ctx) error {
 		return err
 	}
 
-	c.Status(http.StatusOK).JSON(&fiber.Map{"message": "stats fetched succesfully"})
+	c.Status(http.StatusOK).JSON(&fiber.Map{"message": "stats updated succesfully"})
 	return nil
 }
 
@@ -119,7 +119,7 @@ func (r *Repository) DeleteUser(c *fiber.Ctx) error {
 		return err
 	}
 
-	c.Status(http.StatusOK).JSON(&fiber.Map{"message": "stats fetched succesfully"})
+	c.Status(http.StatusOK).JSON(&fiber.Map{"message": "user deleted succesfully"})
 	return nil
 }
 
@@ -143,7 +143,7 @@ func main() {
 		Port:    os.Getenv("DB_PORT"),
 		User:    os.Getenv("DB_USER"),
 		Pass:    os.Getenv("DB_PASS"),
-		Name:    os.Getenv("DB_NAME"),
+		DBName:  os.Getenv("DB_NAME"),
 		SSLMode: os.Getenv("DB_SSLMODE"),
 	}
 
