@@ -7,7 +7,7 @@ import (
 )
 
 type Stats struct {
-	ID                int       `gorm:"primaryKey;autoIncrement:false;default:0" json:"id"`
+	ID                uint8     `gorm:"primaryKey;autoIncrement" json:"id"`
 	User              string    `json:"user"`
 	FlatBench         int       `json:"flatBench"`
 	InclineBench      int       `json:"inclineBench"`
@@ -15,7 +15,7 @@ type Stats struct {
 	PullUps           int       `json:"pullUps"`
 	WeightedPullUpMax int       `json:"weightedPullUpMax"`
 	BodyWeight        int       `json:"bodyWeight"`
-	CreationDate      time.Time `json:"creationDate"`
+	CreatedAt         time.Time `json:"createdAt"`
 }
 
 func MigrateStats(db *gorm.DB) error {

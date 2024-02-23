@@ -1,7 +1,6 @@
 package main
 
 import (
-	"github.com/LukasBel/Only-Offshore.git/Handlers"
 	"github.com/LukasBel/Only-Offshore.git/Models"
 	"github.com/LukasBel/Only-Offshore.git/Storage"
 	"github.com/gofiber/fiber/v2"
@@ -10,7 +9,6 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"strings"
 	"time"
 )
 
@@ -26,64 +24,85 @@ type Stat struct {
 	PullUps           int       `json:"pullUps"`
 	WeightedPullUpMax int       `json:"weightedPullUpMax"`
 	BodyWeight        int       `json:"bodyWeight"`
-	CreationDate      time.Time `json:"creationDate"`
+	CreatedAt         time.Time `json:"createdAt"`
 }
 
-func (r *Repository) GetStats(c *fiber.Ctx) error {
-	statsModel := &[]Models.Stats{}
+func (r *Repository) CreateUser(c *fiber.Ctx) error {
+	spotModel := Stat{}
+	err := c.BodyParser(&spotModel)
+	spotModel.CreatedAt = time.Now()
 
-	err := r.DB.Find(&statsModel).Error
 	if err != nil {
-		c.Status(http.StatusUnprocessableEntity).JSON(&fiber.Map{"message": "failed to fetch stats"})
+		c.Status(http.StatusUnprocessableEntity).JSON(&fiber.Map{"message": "something went wrong"})
 		return err
 	}
 
-	c.Status(http.StatusOK).JSON(&fiber.Map{"message": "stats fetched succesfully", "data": statsModel})
+	err = r.DB.Create(spotModel).Error
+	if err != nil {
+		c.Status(http.StatusBadRequest).JSON(&fiber.Map{"message": "failed to create database entry"})
+		return err
+	}
+
+	c.Status(http.StatusOK).JSON(&fiber.Map{"message": "spot created successfully!"})
+	return nil
+
+}
+
+func (r *Repository) GetStats(c *fiber.Ctx) error {
+	spotModels := &[]Models.Stats{}
+	err := r.DB.Find(&spotModels).Error
+
+	if err != nil {
+		c.Status(http.StatusUnprocessableEntity).JSON(&fiber.Map{"message": "failed to get surf spots"})
+		return err
+	}
+	c.Status(http.StatusOK).JSON(&fiber.Map{"message": "spots found successfully!", "data": spotModels})
 	return nil
 }
 
 func (r *Repository) GetStatsByID(c *fiber.Ctx) error {
-	statsModel := &Models.Stats{}
 	id := c.Params("id")
+	spotModel := &Models.Stats{}
 
 	if id == "" {
 		c.Status(http.StatusUnprocessableEntity).JSON(&fiber.Map{"message": "empty ID"})
 		return nil
 	}
 
-	err := r.DB.Where("id = ?", id).First(&statsModel).Error
+	err := r.DB.Where("id = ?", id).First(&spotModel).Error
 	if err != nil {
-		c.Status(http.StatusBadRequest).JSON(&fiber.Map{"message": "failed to fetch stats"})
+		c.Status(http.StatusBadRequest).JSON(&fiber.Map{"message": "failed to retrieve spot"})
 		return err
 	}
 
-	c.Status(http.StatusOK).JSON(&fiber.Map{"message": "stats fetched succesfully", "data": statsModel})
+	c.Status(http.StatusOK).JSON(&fiber.Map{"message": "spot found successfully", "data": spotModel})
 	return nil
+
 }
 
-func (r *Repository) CreateUser(c *fiber.Ctx) error {
-	statsModel := Stat{}
-	err := c.BodyParser(&statsModel)
+func (r *Repository) DeleteUser(c *fiber.Ctx) error {
+	id := c.Params("id")
+	surfModel := &Models.Stats{}
+
+	if id == "" {
+		c.Status(http.StatusUnprocessableEntity).JSON(&fiber.Map{"message": "empty ID"})
+		return nil
+	}
+
+	err := r.DB.Where("id = ?", id).Delete(&surfModel).Error
 	if err != nil {
-		c.Status(http.StatusUnprocessableEntity).JSON(&fiber.Map{"message": "failed to parse body"})
+		c.Status(http.StatusBadRequest).JSON(&fiber.Map{"message": "failed to delete spot"})
 		return err
 	}
 
-	statsModel.CreationDate = time.Now()
-
-	err = r.DB.Create(statsModel).Error
-	if err != nil {
-		c.Status(http.StatusBadRequest).JSON(&fiber.Map{"message": "failed to create entry"})
-		return err
-	}
-
-	c.Status(http.StatusOK).JSON(&fiber.Map{"message": "user created succesfully"})
+	c.Status(http.StatusOK).JSON(&fiber.Map{"message": "spot deleted successfully"})
 	return nil
+
 }
 
 func (r *Repository) UpdateStats(c *fiber.Ctx) error {
 	id := c.Params("id")
-	statsModel := &Models.Stats{}
+	spotModel := &Models.Stats{}
 	newModel := Stat{}
 
 	err := c.BodyParser(&newModel)
@@ -95,34 +114,36 @@ func (r *Repository) UpdateStats(c *fiber.Ctx) error {
 		c.Status(http.StatusUnprocessableEntity).JSON(&fiber.Map{"message": "empty ID"})
 		return nil
 	}
+	err = r.DB.Model(spotModel).Where("id = ?", id).Updates(newModel).Error
 
-	err = r.DB.Model(statsModel).Where("id = ?").Updates(newModel).Error
 	if err != nil {
-		c.Status(http.StatusBadRequest).JSON(&fiber.Map{"message": "failed to update stats"})
+		c.Status(http.StatusBadRequest).JSON(&fiber.Map{"message": "failed to update spot"})
 		return err
 	}
 
-	c.Status(http.StatusOK).JSON(&fiber.Map{"message": "stats updated succesfully"})
+	c.Status(http.StatusOK).JSON(&fiber.Map{"message": "spot updated successfully", "data": spotModel})
 	return nil
 }
 
-func (r *Repository) DeleteUser(c *fiber.Ctx) error {
-	statsModel := &Models.Stats{}
-	id := c.Params("id")
+func (r *Repository) Progress(c *fiber.Ctx) error {
+	before := &Models.Stats{}
+	after := &Models.Stats{}
 
-	if id == "" {
-		c.Status(http.StatusUnprocessableEntity).JSON(&fiber.Map{"message": "empty ID"})
-		return nil
-	}
-
-	err := r.DB.Where("id = ?").Delete(&statsModel).Error
+	err := r.DB.First(&before).Error
 	if err != nil {
-		c.Status(http.StatusBadRequest).JSON(&fiber.Map{"message": "failed to delete user"})
+		c.Status(http.StatusBadRequest).JSON(&fiber.Map{"message": "failed to find user"})
 		return err
 	}
 
-	c.Status(http.StatusOK).JSON(&fiber.Map{"message": "user deleted succesfully"})
+	err = r.DB.Last(&after).Error
+	if err != nil {
+		c.Status(http.StatusBadRequest).JSON(&fiber.Map{"message": "failed to find user"})
+		return err
+	}
+
+	c.Status(http.StatusOK).JSON(&fiber.Map{"message": "stats fetched succesfully", "data": after})
 	return nil
+
 }
 
 func (r *Repository) SetUpRoutes(app *fiber.App) {
@@ -132,6 +153,7 @@ func (r *Repository) SetUpRoutes(app *fiber.App) {
 	api.Post("/create", r.CreateUser)
 	api.Put("/update/:id", r.UpdateStats)
 	api.Delete("/delete/:id", r.DeleteUser)
+	api.Get("/progress", r.Progress)
 }
 
 func main() {
@@ -163,10 +185,12 @@ func main() {
 		DB: db,
 	}
 
-	emails := os.Getenv("TO")
-	emailAddresses := strings.Split(emails, ",")
+	/*
+		emails := os.Getenv("TO")
+		emailAddresses := strings.Split(emails, ",")
 
-	Handlers.SendMail(emailAddresses)
+		Handlers.SendMail(emailAddresses)
+	*/
 
 	app := fiber.New()
 	r.SetUpRoutes(app)
